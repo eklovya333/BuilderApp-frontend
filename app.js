@@ -5,10 +5,12 @@ const auth = require("./middleware/auth");
 const User = require("./model/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cors = require("cors");
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.post("/register", async (req, res) => {
     console.log("inside registry");
@@ -67,7 +69,9 @@ app.post("/register", async (req, res) => {
       }
       // Validate if user exist in our database
       const user = await User.findOne({ email });
-  
+      if (!user) {
+        return res.status(400).send("User not found");
+      }
       if (user && (await bcrypt.compare(password, user.password))) {
         // Create token
         const token = jwt.sign(
@@ -80,12 +84,11 @@ app.post("/register", async (req, res) => {
   
         // save user token
         user.token = token;
-  
         // user
         return res.status(200).json(user);
       }
 
-  }      catch (err) {
+  } catch (err) {
     return res.status(400).send("Invalid Credentials");
 }
   }
